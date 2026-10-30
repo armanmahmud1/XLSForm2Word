@@ -1,0 +1,13 @@
+{
+  "platform": "ODK",
+  "output_folder": "",
+  "selected_columns": [
+    "Variable",
+    "Question",
+    "Choices",
+    "Constraint",
+    "Relevance",
+    "Calculation"
+  ],
+  "window_geometry": ""
+}
