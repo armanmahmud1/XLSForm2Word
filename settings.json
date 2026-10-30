@@ -1,0 +1,13 @@
+{
+  "platform": "ODK",
+  "output_folder": "C:\\Users\\Arman\\Documents",
+  "selected_columns": [
+    "Variable",
+    "Question",
+    "Choices",
+    "Constraint",
+    "Relevance",
+    "Calculation"
+  ],
+  "window_geometry": "AdnQywADAAAAAAAH////+wAAA8YAAAMuAAAABwAAABkAAAPGAAADLgAAAAAAAAAABgAAAAAHAAAAGQAAA8YAAAMu"
+}

@@ -184,6 +184,19 @@ def _replace_build_directory(staging: Path, target: Path) -> None:
         print(f"Warning: the previous build could not be removed: {backup}")
 
 
+def _document_contains_website_link(path: Path) -> bool:
+    with zipfile.ZipFile(path) as archive:
+        relationship_paths = [
+            name
+            for name in archive.namelist()
+            if name.startswith("word/_rels/") and name.endswith(".rels")
+        ]
+        return any(
+            WEBSITE in archive.read(relationship_path).decode("utf-8")
+            for relationship_path in relationship_paths
+        )
+
+
 def _run_frozen_smoke_test(executable: Path) -> None:
     sample = ROOT / "sample" / "HouseholdSurvey_ODK.xlsx"
     if not sample.exists():
@@ -235,7 +248,7 @@ def _run_frozen_smoke_test(executable: Path) -> None:
                 document_xml = archive.read("word/document.xml").decode("utf-8")
             if f"<Company>{xml_escape(AUTHOR)}</Company>" not in app_xml:
                 raise SystemExit(f"Company metadata missing from {path.name}")
-            if WEBSITE not in document_xml:
+            if not _document_contains_website_link(path):
                 raise SystemExit(f"Footer hyperlink missing from {path.name}")
 
         with zipfile.ZipFile(outputs["Household Survey_Arabic_word.docx"]) as archive:

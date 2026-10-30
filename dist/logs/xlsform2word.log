@@ -1,0 +1,19 @@
+[2026-10-30 19:33:22] XLSForm2Word v1.0.1 started
+[2026-10-30 19:33:22] Selected file: H:\My Drive\00_Workspace\Repositories\XLSForm2Word\sample\HouseholdSurvey_ODK.xlsx
+[2026-10-30 19:33:23] Workbook loaded: 12 survey row(s), 11 choice row(s); questionnaire name: Household Survey
+[2026-10-30 19:33:23] Detected language(s): English, Bangla, Arabic
+[2026-10-30 19:33:23] XLSForm2Word v1.0.1 generation started | platform=ODK | languages=English, Bangla, Arabic | columns=Variable, Question, Choices, Constraint, Relevance, Calculation
+[2026-10-30 19:33:23] Validation passed for H:\My Drive\00_Workspace\Repositories\XLSForm2Word\sample\HouseholdSurvey_ODK.xlsx (3 language(s), 6 column(s))
+[2026-10-30 19:33:23] Selected file: H:\My Drive\00_Workspace\Repositories\XLSForm2Word\sample\HouseholdSurvey_ODK.xlsx
+[2026-10-30 19:33:23] Workbook loaded: 12 survey row(s), 11 choice row(s); questionnaire name: Household Survey
+[2026-10-30 19:33:23] Detected language(s): English, Bangla, Arabic
+[2026-10-30 19:33:23] Detected language(s): English, Bangla, Arabic
+[2026-10-30 19:33:23] Generating 3 document(s) for questionnaire: Household Survey
+[2026-10-30 19:33:23] Built 4 choice list(s) with 11 choice(s) for language English
+[2026-10-30 19:33:23] Generated document: C:\Users\Arman\AppData\Local\Temp\xlsform2word-version-smoke\Household Survey_English_word.docx
+[2026-10-30 19:33:23] Built 4 choice list(s) with 11 choice(s) for language Bangla
+[2026-10-30 19:33:23] Generated document: C:\Users\Arman\AppData\Local\Temp\xlsform2word-version-smoke\Household Survey_Bangla_word.docx
+[2026-10-30 19:33:23] Built 4 choice list(s) with 11 choice(s) for language Arabic
+[2026-10-30 19:33:23] Generated document: C:\Users\Arman\AppData\Local\Temp\xlsform2word-version-smoke\Household Survey_Arabic_word.docx
+[2026-10-30 19:33:23] Generation completed successfully: 3 document(s) in C:\Users\Arman\AppData\Local\Temp\xlsform2word-version-smoke
+[2026-10-30 19:33:23] Frozen smoke test completed: 3 document(s)

@@ -8,6 +8,8 @@ documentation. It is built for research assistants, survey programmers, M&E
 specialists, data analysts, and researchers who need reliable questionnaire
 printouts without installing Python or using an internet connection.
 
+Current release: **v1.0.2**
+
 The current application version, author, and website are defined in one place:
 `utils/version.py`. The interface, Word metadata, footers, About dialog, logs,
 user guide, and Windows executable metadata all read from that file.

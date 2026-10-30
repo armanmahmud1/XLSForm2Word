@@ -1,0 +1,31 @@
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 0, 2, 0),
+    prodvers=(1, 0, 2, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [
+          StringStruct('CompanyName', 'Arman Mahmud'),
+          StringStruct('FileDescription', 'XLSForm to Word questionnaire converter'),
+          StringStruct('FileVersion', '1.0.2'),
+          StringStruct('InternalName', 'XLSForm2Word'),
+          StringStruct('LegalCopyright', f'Copyright (c) 2026 Arman Mahmud'),
+          StringStruct('OriginalFilename', 'XLSForm2Word.exe'),
+          StringStruct('ProductName', 'XLSForm2Word'),
+          StringStruct('ProductVersion', '1.0.2'),
+          StringStruct('Comments', f'Generated using XLSForm2Word v1.0.2'),
+        ]
+      )
+    ]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)

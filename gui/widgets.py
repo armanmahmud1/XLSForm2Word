@@ -46,6 +46,10 @@ class FileDropZone(QFrame):
         self._path = QLabel("Drag and drop an .xlsx or .xls file here, or browse.")
         self._path.setObjectName("PathLabel")
         self._path.setWordWrap(True)
+        self._path.setSizePolicy(
+            QSizePolicy.Policy.Ignored,
+            QSizePolicy.Policy.Preferred,
+        )
         self._path.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         text_layout.addWidget(self._title)
         text_layout.addWidget(self._path)
