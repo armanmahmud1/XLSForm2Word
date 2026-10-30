@@ -10,9 +10,26 @@ printouts without installing Python or using an internet connection.
 
 Current release: **v1.0.2**
 
-The current application version, author, and website are defined in one place:
-`utils/version.py`. The interface, Word metadata, footers, About dialog, logs,
-user guide, and Windows executable metadata all read from that file.
+## Download and Install
+
+1. Go to the [Releases](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) page.
+2. Download `XLSForm2Word_v1.0.2_Windows.zip` from the Assets section.
+3. Extract the ZIP to any folder.
+4. Open the extracted `XLSForm2Word` folder and double-click `XLSForm2Word.exe`.
+
+> **Note:** Windows Defender may show a warning. Click **More info** and then **Run anyway**.
+
+No installation, administrator rights, Python, or internet connection is required.
+
+## Quick Start
+
+1. Select **ODK** or **SurveyCTO** as the platform.
+2. Browse for or drag and drop an `.xlsx` or `.xls` XLSForm.
+3. Select one or more detected languages.
+4. Choose an output folder.
+5. Click **Generate Word Documents**.
+
+Each selected language produces a separate Word document named `<QuestionnaireName>_<Language>_word.docx`.
 
 ## Features
 
@@ -30,18 +47,9 @@ user guide, and Windows executable metadata all read from that file.
 - Friendly validation and error dialogs with no raw Python tracebacks
 - Background generation so the interface stays responsive
 
-## Portable use
+## Folder layout
 
-1. Download and extract the portable ZIP.
-2. Open the extracted `XLSForm2Word` folder.
-3. Double-click `XLSForm2Word.exe`.
-4. Select an XLSForm, choose languages and columns, and generate.
-
-No installation, administrator rights, Python runtime, or internet connection is
-required. Keep `settings.json`, `logs`, `assets`, and `README.pdf` beside the
-executable.
-
-The distributed folder has this layout:
+Keep all files beside the executable:
 
 ```text
 XLSForm2Word/
@@ -73,24 +81,6 @@ On systems where PowerShell activation is restricted, use:
 
 Runtime dependencies are listed in `requirements.txt`; build and test tools are
 listed in `requirements-dev.txt`.
-
-## Usage
-
-1. Select ODK or SurveyCTO.
-2. Browse for or drag in an `.xlsx` or `.xls` XLSForm.
-3. Select one or more detected languages.
-4. Select the output folder.
-5. Tick the table columns to include. At least one column must remain selected.
-6. Click **Generate Word Documents**.
-
-Documents are named:
-
-```text
-<QuestionnaireName>_<Language>_word.docx
-```
-
-The questionnaire name is read from `form_title` or `form_name` in the settings
-sheet. If neither exists, the workbook file name is used.
 
 ## Testing
 
