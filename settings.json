@@ -1,5 +1,5 @@
 {
-  "platform": "ODK",
+  "platform": "SurveyCTO",
   "output_folder": "C:\\Users\\Arman\\Documents",
   "selected_columns": [
     "Variable",
@@ -9,5 +9,5 @@
     "Relevance",
     "Calculation"
   ],
-  "window_geometry": "AdnQywADAAAAAAAH////+wAAA8YAAAMuAAAABwAAABkAAAPGAAADLgAAAAAAAAAABgAAAAAHAAAAGQAAA8YAAAMu"
+  "window_geometry": "AdnQywADAAAAAAAA////+QAABf8AAAMvAAAABwAAABkAAAPGAAADLgAAAAACAAAABgAAAAAAAAAAFwAABf8AAAMv"
 }
