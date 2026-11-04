@@ -1,7 +1,7 @@
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 1, 0, 0),
-    prodvers=(1, 1, 0, 0),
+    filevers=(1, 1, 2, 0),
+    prodvers=(1, 1, 2, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -16,13 +16,13 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'Arman Mahmud'),
           StringStruct('FileDescription', 'XLSForm to Word questionnaire converter'),
-          StringStruct('FileVersion', '1.1.0'),
+          StringStruct('FileVersion', '1.1.2'),
           StringStruct('InternalName', 'XLSForm2Word'),
           StringStruct('LegalCopyright', f'Copyright (c) 2026 Arman Mahmud'),
           StringStruct('OriginalFilename', 'XLSForm2Word.exe'),
           StringStruct('ProductName', 'XLSForm2Word'),
-          StringStruct('ProductVersion', '1.1.0'),
-          StringStruct('Comments', f'Generated using XLSForm2Word v1.1.0'),
+          StringStruct('ProductVersion', '1.1.2'),
+          StringStruct('Comments', f'Generated using XLSForm2Word v1.1.2'),
         ]
       )
     ]),
