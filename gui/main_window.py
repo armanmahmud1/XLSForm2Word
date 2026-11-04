@@ -569,7 +569,7 @@ class MainWindow(QMainWindow):
             if not languages:
                 raise XLSForm2WordError(
                     "No language columns were found in the survey sheet. "
-                    "Add at least one column such as 'label::English' and try again."
+                    "Add at least one column such as 'label::English' or 'label' and try again."
                 )
             self.current_form = form
             self.detected_languages = languages

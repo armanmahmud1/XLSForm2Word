@@ -44,6 +44,14 @@ class LanguageDetector:
             seen.add(key)
             detected.append(LabelColumn(column=column, language=language))
 
+        # Fallback: bare "label" column → language "Default"
+        if not detected:
+            for raw_column in columns:
+                column = str(raw_column).strip()
+                if column.casefold() == "label":
+                    detected.append(LabelColumn(column=column, language="Default"))
+                    break
+
         logger.info(
             "Detected language(s): %s",
             ", ".join(item.language for item in detected) or "none",
@@ -63,6 +71,14 @@ class LanguageDetector:
                     if candidate.casefold() == language.casefold():
                         return LabelColumn(column=column, language=candidate)
                     break
+
+        # Fallback: bare "label" column for language "Default"
+        if language.casefold() == "default":
+            for raw_column in columns:
+                column = str(raw_column).strip()
+                if column.casefold() == "label":
+                    return LabelColumn(column=column, language="Default")
+
         return None
 
 

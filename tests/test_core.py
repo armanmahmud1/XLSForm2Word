@@ -160,6 +160,28 @@ def test_double_colon_takes_precedence_over_single_colon() -> None:
     assert english.column == "label::English"
 
 
+def test_bare_label_detected_as_default_language() -> None:
+    columns = ["type", "label", "name"]
+    detected = LanguageDetector().detect_from_columns(columns)
+    assert len(detected) == 1
+    assert detected[0].language == "Default"
+    assert detected[0].column == "label"
+
+
+def test_prefixed_columns_take_priority_over_bare_label() -> None:
+    columns = ["type", "label::English", "label", "name"]
+    detected = LanguageDetector().detect_from_columns(columns)
+    assert [item.language for item in detected] == ["English"]
+
+
+def test_resolve_finds_bare_label_for_default_language() -> None:
+    columns = ["type", "label", "name"]
+    result = LanguageDetector.resolve(columns, "Default")
+    assert result is not None
+    assert result.column == "label"
+    assert result.language == "Default"
+
+
 def test_translated_column_resolves_single_colon() -> None:
     columns = ["constraint:English", "name"]
     assert translated_column(columns, "constraint", "English") == "constraint:English"
