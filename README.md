@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/armanmahmud1/XLSForm2Word/releases/latest"><strong>Download v1.1.2</strong></a>
+  <a href="https://github.com/armanmahmud1/XLSForm2Word/releases/latest"><strong>Download v1.2.0</strong></a>
 </p>
 
 ---
@@ -30,12 +30,11 @@ Household Survey_Arabic_word.docx
 
 ## Quick Start
 
-1. Download [`XLSForm2Word_v1.1.2_Windows.zip`](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) and extract it.
+1. Download [`XLSForm2Word_v1.2.0_Windows.zip`](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) and extract it.
 2. Double-click **`XLSForm2Word.exe`** (no install needed).
-3. Pick your platform: **ODK**, **SurveyCTO**, or **KoboToolbox**.
-4. Drag and drop your XLSForm (or click Browse).
-5. Select languages and output columns.
-6. Click **Generate Word Documents**.
+3. Drag and drop your XLSForm (or click Browse).
+4. Select languages and output columns.
+5. Click **Generate Word Documents**.
 
 > **Note:** Windows Defender may show a SmartScreen warning. Click **More info** then **Run anyway**.
 
@@ -52,7 +51,8 @@ Household Survey_Arabic_word.docx
 | **Choice lists** | Rendered as `[value] label` from the choices sheet |
 | **Document format** | A4 portrait, Calibri Light, repeat-on-every-page headers, branded footer |
 | **File input** | Drag-and-drop or file browser, `.xlsx` and `.xls` |
-| **Portable settings** | `settings.json` remembers output folder, platform, columns, and window size |
+| **Auto-detection** | Platform (SurveyCTO vs ODK) is detected automatically from form columns |
+| **Portable settings** | `settings.json` remembers output folder, columns, and window size |
 | **Logging** | Rotating log file with startup, generation, and error records |
 | **Privacy** | Fully offline — nothing is uploaded, ever |
 
