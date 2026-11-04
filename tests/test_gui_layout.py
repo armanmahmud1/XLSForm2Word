@@ -7,7 +7,7 @@ from utils.version import APP_VERSION
 
 
 def test_application_version_is_patch_release() -> None:
-    assert APP_VERSION == "1.1.2"
+    assert APP_VERSION == "1.2.0"
 
 
 def test_file_drop_zone_path_label_can_shrink_horizontally() -> None:

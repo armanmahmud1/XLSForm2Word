@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from core.models import LabelColumn
+from core.models import LabelColumn, Platform, XLSForm
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +80,31 @@ class LanguageDetector:
                     return LabelColumn(column=column, language="Default")
 
         return None
+
+
+def detect_platform(form: XLSForm) -> Platform:
+    """Auto-detect the XLSForm platform from column names.
+
+    - Choices sheet has ``value`` but not ``name`` → SurveyCTO
+    - Choices sheet has ``name`` but not ``value`` → ODK
+    - Both exist → check survey for ``relevance`` vs ``relevant``
+    - Default fallback → ODK
+    """
+    choices_cols = {str(c).strip().casefold() for c in form.choices.columns}
+    has_value = "value" in choices_cols
+    has_name = "name" in choices_cols
+
+    if has_value and not has_name:
+        return Platform.SURVEYCTO
+    if has_name and not has_value:
+        return Platform.ODK
+
+    # Tiebreaker: inspect survey columns
+    survey_cols = {str(c).strip().casefold() for c in form.survey.columns}
+    if "relevance" in survey_cols and "relevant" not in survey_cols:
+        return Platform.SURVEYCTO
+
+    return Platform.ODK
 
 
 def resolve_column(

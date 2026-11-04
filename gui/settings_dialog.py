@@ -123,7 +123,7 @@ class SettingsDialog(QDialog):
         answer = QMessageBox.question(
             self,
             "Reset Preferences",
-            "Reset the platform, output folder, and selected columns to their "
+            "Reset the output folder and selected columns to their "
             "defaults?\n\nThis does not delete any generated documents.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,

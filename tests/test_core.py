@@ -12,7 +12,7 @@ from openpyxl import Workbook
 from core.choices_builder import ChoicesBuilder
 from core.errors import ValidationError, XLSFormError
 from core.generation_service import GenerationService
-from core.language_detector import LanguageDetector, resolve_column, translated_column
+from core.language_detector import LanguageDetector, detect_platform, resolve_column, translated_column
 from core.models import GenerationRequest, Platform
 from core.question_types import parse_type
 from core.validator import GenerationValidator
@@ -24,6 +24,49 @@ ROOT = Path(__file__).resolve().parents[1]
 ODK_SAMPLE = ROOT / "sample" / "HouseholdSurvey_ODK.xlsx"
 CTO_SAMPLE = ROOT / "sample" / "HouseholdSurvey_SurveyCTO.xlsx"
 KOBO_SAMPLE = ROOT / "sample" / "HouseholdSurvey_KoboToolbox.xlsx"
+
+
+def _make_form(
+    survey_cols: list[str],
+    choices_cols: list[str],
+) -> XLSForm:
+    """Create a minimal XLSForm with the given column names."""
+    from core.models import XLSForm
+
+    survey = pd.DataFrame(columns=survey_cols)
+    choices = pd.DataFrame(columns=choices_cols)
+    return XLSForm(
+        source_path=Path("test.xlsx"),
+        survey=survey,
+        choices=choices,
+        questionnaire_name="Test",
+    )
+
+
+def test_detect_platform_name_only_returns_odk() -> None:
+    form = _make_form(["type", "name", "label"], ["list_name", "name", "label"])
+    assert detect_platform(form) == Platform.ODK
+
+
+def test_detect_platform_value_only_returns_surveycto() -> None:
+    form = _make_form(["type", "name", "label"], ["list_name", "value", "label"])
+    assert detect_platform(form) == Platform.SURVEYCTO
+
+
+def test_detect_platform_both_columns_with_relevant_returns_odk() -> None:
+    form = _make_form(
+        ["type", "name", "label", "relevant"],
+        ["list_name", "name", "value", "label"],
+    )
+    assert detect_platform(form) == Platform.ODK
+
+
+def test_detect_platform_both_columns_with_relevance_returns_surveycto() -> None:
+    form = _make_form(
+        ["type", "name", "label", "relevance"],
+        ["list_name", "name", "value", "label"],
+    )
+    assert detect_platform(form) == Platform.SURVEYCTO
 
 
 def test_language_detection_preserves_order_and_deduplicates() -> None:

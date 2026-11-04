@@ -16,7 +16,6 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
-    QButtonGroup,
     QCheckBox,
     QFileDialog,
     QFrame,
@@ -28,7 +27,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QRadioButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
@@ -36,7 +34,7 @@ from PySide6.QtWidgets import (
 
 from core.errors import ValidationError, XLSForm2WordError
 from core.generation_service import GenerationResult, GenerationService
-from core.language_detector import LanguageDetector
+from core.language_detector import LanguageDetector, detect_platform
 from core.models import GenerationRequest, LabelColumn, Platform, XLSForm
 from gui.about_dialog import AboutDialog
 from gui.form_load_worker import FormLoadWorker
@@ -45,7 +43,6 @@ from gui.settings_dialog import SettingsDialog
 from gui.widgets import FileDropZone
 from utils.config import (
     COLUMN_NAMES,
-    PLATFORMS,
     AppSettings,
     SettingsManager,
 )
@@ -81,6 +78,7 @@ class MainWindow(QMainWindow):
         self.language_detector = LanguageDetector()
 
         self.current_form: XLSForm | None = None
+        self.detected_platform: Platform = Platform.ODK
         self.detected_languages: list[LabelColumn] = []
         self.language_checkboxes: dict[str, QCheckBox] = {}
         self.column_checkboxes: dict[str, QCheckBox] = {}
@@ -233,27 +231,11 @@ class MainWindow(QMainWindow):
         title.setObjectName("SectionTitle")
         layout.addWidget(title)
 
-        platform_row = QHBoxLayout()
-        platform_row.setSpacing(16)
-        platform_label = QLabel("Platform")
-        platform_label.setStyleSheet("font-weight: 500; color: #374151;")
-        platform_row.addWidget(platform_label)
-
-        self.platform_group = QButtonGroup(self)
-        for name in PLATFORMS:
-            radio = QRadioButton(name)
-            radio.setCursor(Qt.CursorShape.PointingHandCursor)
-            tooltips = {
-                "ODK": "ODK forms use 'name' values and 'relevant'.",
-                "SurveyCTO": "SurveyCTO forms use 'value' values and 'relevance'.",
-                "KoboToolbox": "KoboToolbox forms use 'name' values and 'relevant' (same as ODK).",
-            }
-            radio.setToolTip(tooltips.get(name, ""))
-            radio.toggled.connect(self._on_platform_changed)
-            self.platform_group.addButton(radio)
-            platform_row.addWidget(radio)
-        platform_row.addStretch(1)
-        layout.addLayout(platform_row)
+        platform_note = QLabel(
+            "Works with SurveyCTO, ODK, KoboToolbox and other ODK-based platforms."
+        )
+        platform_note.setObjectName("SectionHint")
+        layout.addWidget(platform_note)
 
         self.file_drop = FileDropZone()
         self.file_drop.browseRequested.connect(self._browse_form)
@@ -430,14 +412,6 @@ class MainWindow(QMainWindow):
         *,
         reset_state: bool = False,
     ) -> None:
-        selected_platform = settings.platform
-        for button in self.platform_group.buttons():
-            if button.text() == selected_platform:
-                button.setChecked(True)
-                break
-        else:
-            self.platform_group.buttons()[0].setChecked(True)
-
         self._suspend_column_guard = True
         for name, checkbox in self.column_checkboxes.items():
             checkbox.setChecked(name in settings.selected_columns)
@@ -464,14 +438,6 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(0)
             self.percent_label.setText("")
 
-    def _selected_platform(self) -> Platform:
-        button = self.platform_group.checkedButton()
-        name = button.text() if button is not None else "ODK"
-        try:
-            return Platform(name)
-        except ValueError:
-            return Platform.ODK
-
     def _selected_columns(self) -> list[str]:
         return [
             name for name in COLUMN_NAMES if self.column_checkboxes[name].isChecked()
@@ -489,7 +455,6 @@ class MainWindow(QMainWindow):
         if include_geometry:
             geometry = bytes(self.saveGeometry().toBase64()).decode("ascii")
         self.settings = AppSettings(
-            platform=self._selected_platform().value,
             output_folder=self.output_edit.text().strip(),
             selected_columns=self._selected_columns(),
             window_geometry=geometry,
@@ -498,13 +463,6 @@ class MainWindow(QMainWindow):
             logger.warning("Settings could not be persisted")
 
     # ------------------------------------------------------------- events
-    def _on_platform_changed(self, checked: bool) -> None:
-        if not checked or self._applying_settings:
-            return
-        platform = self._selected_platform()
-        logger.info("Selected platform: %s", platform.value)
-        self._save_settings()
-
     def _on_column_toggled(self, checked: bool) -> None:
         if self._suspend_column_guard or self._applying_settings:
             return
@@ -572,6 +530,7 @@ class MainWindow(QMainWindow):
                     "Add at least one column such as 'label::English' or 'label' and try again."
                 )
             self.current_form = form
+            self.detected_platform = detect_platform(form)
             self.detected_languages = languages
             self.file_drop.set_path(form.source_path)
             self._populate_languages(languages)
@@ -663,7 +622,7 @@ class MainWindow(QMainWindow):
         request = GenerationRequest(
             form_path=self.current_form.source_path,
             output_folder=Path(output_text),
-            platform=self._selected_platform(),
+            platform=self.detected_platform,
             languages=tuple(self._selected_languages()),
             columns=tuple(self._selected_columns()),
         )
@@ -752,8 +711,6 @@ class MainWindow(QMainWindow):
         self.open_action.setEnabled(not busy)
         self.output_action.setEnabled(not busy)
         self.settings_action.setEnabled(not busy)
-        for button in self.platform_group.buttons():
-            button.setEnabled(not busy)
         for checkbox in self.column_checkboxes.values():
             checkbox.setEnabled(not busy)
         for checkbox in self.language_checkboxes.values():

@@ -90,8 +90,8 @@ def _run_smoke_test(arguments: list[str], logger: logging.Logger) -> int:
     form_path = Path(arguments[0]).expanduser()
     try:
         from core.generation_service import GenerationService
-        from core.language_detector import LanguageDetector
-        from core.models import GenerationRequest, Platform
+        from core.language_detector import LanguageDetector, detect_platform
+        from core.models import GenerationRequest
         from utils.config import COLUMN_NAMES
 
         service = GenerationService()
@@ -106,7 +106,7 @@ def _run_smoke_test(arguments: list[str], logger: logging.Logger) -> int:
             GenerationRequest(
                 form_path=form_path,
                 output_folder=output_dir,
-                platform=Platform.ODK,
+                platform=detect_platform(form),
                 languages=tuple(languages),
                 columns=COLUMN_NAMES,
             )
