@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/armanmahmud1/XLSForm2Word/releases/latest"><strong>Download v1.2.0</strong></a>
+  <a href="https://github.com/armanmahmud1/XLSForm2Word/releases/latest"><strong>Download v1.2.1</strong></a>
 </p>
 
 ---
@@ -30,7 +30,7 @@ Household Survey_Arabic_word.docx
 
 ## Quick Start
 
-1. Download [`XLSForm2Word_v1.2.0_Windows.zip`](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) and extract it.
+1. Download [`XLSForm2Word_v1.2.1_Windows.zip`](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) and extract it.
 2. Double-click **`XLSForm2Word.exe`** (no install needed).
 3. Drag and drop your XLSForm (or click Browse).
 4. Select languages and output columns.
