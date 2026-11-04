@@ -1,4 +1,4 @@
-"""Detect translation columns such as ``label::English``."""
+"""Detect translation columns such as ``label::English`` and ``label:English``."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from core.models import LabelColumn
 
 logger = logging.getLogger(__name__)
 
-LABEL_PREFIX = "label::"
+LABEL_PREFIXES = ("label::", "label:")
 
 
 class LanguageDetector:
@@ -26,9 +26,11 @@ class LanguageDetector:
 
         for raw_column in columns:
             column = str(raw_column).strip()
-            if not column.casefold().startswith(LABEL_PREFIX):
-                continue
-            language = column[len(LABEL_PREFIX) :].strip()
+            language: str | None = None
+            for prefix in LABEL_PREFIXES:
+                if column.casefold().startswith(prefix):
+                    language = column[len(prefix) :].strip()
+                    break
             if not language:
                 continue
             key = language.casefold()
@@ -55,11 +57,12 @@ class LanguageDetector:
     ) -> LabelColumn | None:
         for raw_column in columns:
             column = str(raw_column).strip()
-            if not column.casefold().startswith(LABEL_PREFIX):
-                continue
-            candidate = column[len(LABEL_PREFIX) :].strip()
-            if candidate.casefold() == language.casefold():
-                return LabelColumn(column=column, language=candidate)
+            for prefix in LABEL_PREFIXES:
+                if column.casefold().startswith(prefix):
+                    candidate = column[len(prefix) :].strip()
+                    if candidate.casefold() == language.casefold():
+                        return LabelColumn(column=column, language=candidate)
+                    break
         return None
 
 
@@ -85,5 +88,6 @@ def translated_column(
     return resolve_column(
         columns,
         f"{base_name}::{language}",
+        f"{base_name}:{language}",
         base_name,
     )

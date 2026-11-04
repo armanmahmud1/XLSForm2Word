@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
         language_header = QHBoxLayout()
         languages_label = QLabel("Documentation languages")
         languages_label.setStyleSheet("font-weight: 500; color: #374151;")
-        language_hint = QLabel("Detected from label:: columns")
+        language_hint = QLabel("Detected from label:: and label: columns")
         language_hint.setObjectName("SectionHint")
         language_header.addWidget(languages_label)
         language_header.addStretch(1)

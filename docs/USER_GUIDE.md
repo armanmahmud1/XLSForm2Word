@@ -21,7 +21,7 @@ The application is portable. You can place the folder on a USB drive or a shared
 
 1. Choose the platform: ODK, SurveyCTO, or KoboToolbox. ODK is selected by default.
 2. Click Browse XLSForm and select your workbook, or drag and drop the file anywhere onto the application window.
-3. Review the detected languages. XLSForm2Word finds every column that begins with label::, such as label::English or label::Bangla. Tick one or more languages.
+3. Review the detected languages. XLSForm2Word finds every column that begins with label:: or label:, such as label::English, label:English, or label::Bangla. Tick one or more languages.
 4. Click Browse beside Output folder and choose where the Word documents should be saved.
 5. Tick the table columns you want. At least one column must remain selected.
 6. Click Generate Word Documents.
@@ -84,11 +84,11 @@ If a log file cannot be written beside the executable, the application uses a te
 
 The file cannot be read: Close the workbook in Excel, check that it is not corrupted, and make sure it contains both the survey and choices sheets. Try saving it again as .xlsx.
 
-No languages are detected: Add at least one column such as label::English to the survey sheet.
+No languages are detected: Add at least one column such as label::English or label:English to the survey sheet.
 
 The Word document cannot be saved: Close the document if it is already open in Word, or choose a folder you have permission to write to.
 
-Choices are missing: Check that the choices sheet has list_name, the correct value column (name for ODK and KoboToolbox, value for SurveyCTO), and a matching label:: language column.
+Choices are missing: Check that the choices sheet has list_name, the correct value column (name for ODK and KoboToolbox, value for SurveyCTO), and a matching label:: or label: language column.
 
 A column disappears: At least one table column must remain selected, so the application restores the last column if you try to clear all of them.
 

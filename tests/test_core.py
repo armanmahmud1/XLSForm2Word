@@ -12,7 +12,7 @@ from openpyxl import Workbook
 from core.choices_builder import ChoicesBuilder
 from core.errors import ValidationError, XLSFormError
 from core.generation_service import GenerationService
-from core.language_detector import LanguageDetector, resolve_column
+from core.language_detector import LanguageDetector, resolve_column, translated_column
 from core.models import GenerationRequest, Platform
 from core.question_types import parse_type
 from core.validator import GenerationValidator
@@ -141,6 +141,31 @@ def test_column_resolution_is_case_insensitive() -> None:
     assert resolve_column(["Name", "Relevant"], "name") == "Name"
     assert resolve_column(["Relevant"], "relevant") == "Relevant"
     assert resolve_column(["other"], "name") is None
+
+
+def test_single_colon_language_detection() -> None:
+    columns = ["type", "label:English", "name", "label:Bangla"]
+    detected = LanguageDetector().detect_from_columns(columns)
+    assert [item.language for item in detected] == ["English", "Bangla"]
+    assert detected[0].column == "label:English"
+
+
+def test_double_colon_takes_precedence_over_single_colon() -> None:
+    columns = ["label::English", "label:English", "label:Bangla"]
+    detected = LanguageDetector().detect_from_columns(columns)
+    languages = [item.language for item in detected]
+    assert "English" in languages
+    assert "Bangla" in languages
+    english = next(item for item in detected if item.language == "English")
+    assert english.column == "label::English"
+
+
+def test_translated_column_resolves_single_colon() -> None:
+    columns = ["constraint:English", "name"]
+    assert translated_column(columns, "constraint", "English") == "constraint:English"
+    # Double-colon is preferred when both exist
+    columns_both = ["constraint::English", "constraint:English"]
+    assert translated_column(columns_both, "constraint", "English") == "constraint::English"
 
 
 def test_validator_reports_multiple_friendly_errors(tmp_path: Path) -> None:

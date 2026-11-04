@@ -8,12 +8,12 @@ Word questionnaire documentation. It is built for research assistants, survey pr
 specialists, data analysts, and researchers who need reliable questionnaire
 printouts without installing Python or using an internet connection.
 
-Current release: **v1.1.0**
+Current release: **v1.1.1**
 
 ## Download and Install
 
 1. Go to the [Releases](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) page.
-2. Download `XLSForm2Word_v1.1.0_Windows.zip` from the Assets section.
+2. Download `XLSForm2Word_v1.1.1_Windows.zip` from the Assets section.
 3. Extract the ZIP to any folder.
 4. Open the extracted `XLSForm2Word` folder and double-click `XLSForm2Word.exe`.
 
@@ -34,7 +34,7 @@ Each selected language produces a separate Word document named `<QuestionnaireNa
 ## Features
 
 - ODK, SurveyCTO, and KoboToolbox support
-- Automatic detection of `label::<language>` columns
+- Automatic detection of `label::<language>` and `label:<language>` columns
 - One Word document per selected language
 - Drag and drop or file browsing
 - Choice lists rendered as `[value] label`
@@ -155,7 +155,7 @@ gui/
     theme.py                Application stylesheet
 core/
     xlsform_loader.py       Excel sheet loading and validation
-    language_detector.py    label:: language detection and column resolution
+    language_detector.py    label:: and label: language detection and column resolution
     choices_builder.py      Choice dictionary and display formatting
     question_types.py       Question type parsing and placeholders
     validator.py            Pre-generation checks

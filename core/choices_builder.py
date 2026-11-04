@@ -65,6 +65,7 @@ class ChoicesBuilder:
         label_column = resolve_column(
             choices_frame.columns,
             f"label::{language}",
+            f"label:{language}",
             "label",
         )
         if label_column is None:

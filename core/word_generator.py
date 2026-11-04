@@ -173,7 +173,9 @@ class WordGenerator:
         relevance_column = resolve_column(
             survey.columns,
             f"{platform.relevance_column}::{language}",
+            f"{platform.relevance_column}:{language}",
             f"{platform.relevance_fallback}::{language}",
+            f"{platform.relevance_fallback}:{language}",
             platform.relevance_column,
             platform.relevance_fallback,
         )
