@@ -88,6 +88,7 @@ class MainWindow(QMainWindow):
         self._load_worker: FormLoadWorker | None = None
         self._busy = False
         self._loading = False
+        self._pending_load_error: str | None = None
         self._suspend_column_guard = False
         self._applying_settings = False
         self._icon = self._load_icon()
@@ -480,7 +481,7 @@ class MainWindow(QMainWindow):
         self._save_settings()
 
     def _restore_ready_status(self) -> None:
-        if not self._busy:
+        if not self._locked:
             self._set_status("Ready", "normal")
 
     def _set_status(self, text: str, tone: str = "normal") -> None:
@@ -526,6 +527,9 @@ class MainWindow(QMainWindow):
         )
         self._load_worker.moveToThread(self._load_thread)
         self._load_thread.started.connect(self._load_worker.run)
+        # Order matters: result handlers must be connected before quit so that
+        # queued delivery processes _on_form_loaded/_on_form_load_failed before
+        # the thread stops and _on_load_thread_finished fires.
         self._load_worker.loaded.connect(self._on_form_loaded)
         self._load_worker.failed.connect(self._on_form_load_failed)
         self._load_worker.loaded.connect(self._load_thread.quit)
@@ -536,12 +540,12 @@ class MainWindow(QMainWindow):
         self._load_thread.start()
 
     def _on_form_loaded(self, form: object, languages: object) -> None:
+        self._pending_load_error = None
         self.current_form = form
         self.detected_platform = detect_platform(form)
         self.detected_languages = languages
         self.file_drop.set_path(form.source_path)
         self._populate_languages(languages)
-        self._set_loading(False)
         logger.info(
             "Form loaded: %s | %s detected language(s)",
             form.source_path,
@@ -549,12 +553,18 @@ class MainWindow(QMainWindow):
         )
 
     def _on_form_load_failed(self, message: str) -> None:
-        self._set_loading(False)
-        QMessageBox.warning(self, "Cannot Load XLSForm", message)
+        self._pending_load_error = message
 
     def _on_load_thread_finished(self) -> None:
+        error = self._pending_load_error
+        self._pending_load_error = None
         self._load_worker = None
         self._load_thread = None
+        self._set_loading(False)
+        if error is not None:
+            self._set_status("Load failed", "error")
+            QMessageBox.warning(self, "Cannot Load XLSForm", error)
+            self._set_status("Ready", "normal")
 
     def _populate_languages(self, languages: list[LabelColumn]) -> None:
         self._clear_layout(self.languages_layout)
@@ -698,35 +708,30 @@ class MainWindow(QMainWindow):
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
-        self.generate_button.setEnabled(not busy)
         self.generate_button.setText(
             "Generating..." if busy else "Generate Word Documents"
         )
-        self.output_button.setEnabled(not busy)
-        self.file_drop.browse_button.setEnabled(not busy)
-        self.open_action.setEnabled(not busy)
-        self.output_action.setEnabled(not busy)
-        self.settings_action.setEnabled(not busy)
-        for checkbox in self.column_checkboxes.values():
-            checkbox.setEnabled(not busy)
-        for checkbox in self.language_checkboxes.values():
-            checkbox.setEnabled(not busy)
+        self._update_ui_enabled()
 
     def _set_loading(self, loading: bool) -> None:
         self._loading = loading
-        self.generate_button.setEnabled(not loading)
-        self.output_button.setEnabled(not loading)
-        self.file_drop.browse_button.setEnabled(not loading)
-        self.open_action.setEnabled(not loading)
-        self.output_action.setEnabled(not loading)
-        self.settings_action.setEnabled(not loading)
-        for checkbox in self.column_checkboxes.values():
-            checkbox.setEnabled(not loading)
-        for checkbox in self.language_checkboxes.values():
-            checkbox.setEnabled(not loading)
         self._set_status(
             "Loading form..." if loading else "Ready", "normal"
         )
+        self._update_ui_enabled()
+
+    def _update_ui_enabled(self) -> None:
+        enabled = not self._locked
+        self.generate_button.setEnabled(enabled)
+        self.output_button.setEnabled(enabled)
+        self.file_drop.browse_button.setEnabled(enabled)
+        self.open_action.setEnabled(enabled)
+        self.output_action.setEnabled(enabled)
+        self.settings_action.setEnabled(enabled)
+        for checkbox in self.column_checkboxes.values():
+            checkbox.setEnabled(enabled)
+        for checkbox in self.language_checkboxes.values():
+            checkbox.setEnabled(enabled)
 
     # --------------------------------------------------------------- help
     def _show_about(self) -> None:
@@ -808,11 +813,11 @@ class MainWindow(QMainWindow):
         return None
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if self._busy:
+        if self._locked:
             QMessageBox.warning(
                 self,
-                "Generation In Progress",
-                "Please wait for document generation to finish before closing.",
+                "Operation In Progress",
+                "Please wait for the current operation to finish before closing.",
             )
             event.ignore()
             return
