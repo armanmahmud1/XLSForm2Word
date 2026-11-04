@@ -497,7 +497,7 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------- actions
     def _browse_form(self) -> None:
-        if self._busy:
+        if self._locked:
             return
         start = (
             str(self.current_form.source_path.parent)
@@ -514,51 +514,47 @@ class MainWindow(QMainWindow):
         if path:
             self.load_form(path)
 
-    def load_form(self, path: str | Path) -> bool:
-        if self._busy:
-            return False
+    def load_form(self, path: str | Path) -> None:
+        if self._locked:
+            return
         form_path = Path(path)
-        self._set_status("Loading form...", "normal")
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        QApplication.processEvents()
-        try:
-            form = self.loader.load(form_path)
-            languages = self.language_detector.detect(form.survey)
-            if not languages:
-                raise XLSForm2WordError(
-                    "No language columns were found in the survey sheet. "
-                    "Add at least one column such as 'label::English' or 'label' and try again."
-                )
-            self.current_form = form
-            self.detected_platform = detect_platform(form)
-            self.detected_languages = languages
-            self.file_drop.set_path(form.source_path)
-            self._populate_languages(languages)
-            self._set_status("Ready", "normal")
-            logger.info(
-                "Form loaded: %s | %s detected language(s)",
-                form.source_path,
-                len(languages),
-            )
-            return True
-        except XLSForm2WordError as exc:
-            message = getattr(exc, "message", str(exc))
-            logger.warning("Could not load XLSForm: %s", message)
-            self._set_status("Ready", "normal")
-            QMessageBox.warning(self, "Cannot Load XLSForm", message)
-            return False
-        except Exception:
-            logger.exception("Unexpected error while loading form")
-            self._set_status("Ready", "normal")
-            QMessageBox.critical(
-                self,
-                "Cannot Load XLSForm",
-                "An unexpected error occurred while reading the workbook. "
-                "Please check that the file is a valid XLSForm.",
-            )
-            return False
-        finally:
-            QApplication.restoreOverrideCursor()
+        self._set_loading(True)
+
+        self._load_thread = QThread(self)
+        self._load_worker = FormLoadWorker(
+            form_path, self.loader, self.language_detector
+        )
+        self._load_worker.moveToThread(self._load_thread)
+        self._load_thread.started.connect(self._load_worker.run)
+        self._load_worker.loaded.connect(self._on_form_loaded)
+        self._load_worker.failed.connect(self._on_form_load_failed)
+        self._load_worker.loaded.connect(self._load_thread.quit)
+        self._load_worker.failed.connect(self._load_thread.quit)
+        self._load_thread.finished.connect(self._on_load_thread_finished)
+        self._load_thread.finished.connect(self._load_worker.deleteLater)
+        self._load_thread.finished.connect(self._load_thread.deleteLater)
+        self._load_thread.start()
+
+    def _on_form_loaded(self, form: object, languages: object) -> None:
+        self.current_form = form
+        self.detected_platform = detect_platform(form)
+        self.detected_languages = languages
+        self.file_drop.set_path(form.source_path)
+        self._populate_languages(languages)
+        self._set_loading(False)
+        logger.info(
+            "Form loaded: %s | %s detected language(s)",
+            form.source_path,
+            len(languages),
+        )
+
+    def _on_form_load_failed(self, message: str) -> None:
+        self._set_loading(False)
+        QMessageBox.warning(self, "Cannot Load XLSForm", message)
+
+    def _on_load_thread_finished(self) -> None:
+        self._load_worker = None
+        self._load_thread = None
 
     def _populate_languages(self, languages: list[LabelColumn]) -> None:
         self._clear_layout(self.languages_layout)
@@ -587,7 +583,7 @@ class MainWindow(QMainWindow):
                 widget.deleteLater()
 
     def _browse_output_folder(self) -> None:
-        if self._busy:
+        if self._locked:
             return
         start = self.output_edit.text().strip() or str(default_output_dir())
         if not Path(start).is_dir():
@@ -600,7 +596,7 @@ class MainWindow(QMainWindow):
             self._save_settings()
 
     def _start_generation(self) -> None:
-        if self._busy:
+        if self._locked:
             return
         if self.current_form is None:
             QMessageBox.warning(
@@ -716,6 +712,22 @@ class MainWindow(QMainWindow):
         for checkbox in self.language_checkboxes.values():
             checkbox.setEnabled(not busy)
 
+    def _set_loading(self, loading: bool) -> None:
+        self._loading = loading
+        self.generate_button.setEnabled(not loading)
+        self.output_button.setEnabled(not loading)
+        self.file_drop.browse_button.setEnabled(not loading)
+        self.open_action.setEnabled(not loading)
+        self.output_action.setEnabled(not loading)
+        self.settings_action.setEnabled(not loading)
+        for checkbox in self.column_checkboxes.values():
+            checkbox.setEnabled(not loading)
+        for checkbox in self.language_checkboxes.values():
+            checkbox.setEnabled(not loading)
+        self._set_status(
+            "Loading form..." if loading else "Ready", "normal"
+        )
+
     # --------------------------------------------------------------- help
     def _show_about(self) -> None:
         dialog = AboutDialog(self._icon, self)
@@ -767,13 +779,13 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------- drag/drop
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-        if not self._busy and self._drop_path(event) is not None:
+        if not self._locked and self._drop_path(event) is not None:
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dropEvent(self, event: QDropEvent) -> None:
-        if self._busy:
+        if self._locked:
             event.ignore()
             return
         path = self._drop_path(event)
@@ -804,16 +816,17 @@ class MainWindow(QMainWindow):
             )
             event.ignore()
             return
-        if self._thread is not None and self._thread.isRunning():
-            self._thread.quit()
-            if not self._thread.wait(3000):
-                QMessageBox.warning(
-                    self,
-                    "Please Wait",
-                    "The application is still finishing a background task.",
-                )
-                event.ignore()
-                return
+        for thread in (self._thread, self._load_thread):
+            if thread is not None and thread.isRunning():
+                thread.quit()
+                if not thread.wait(3000):
+                    QMessageBox.warning(
+                        self,
+                        "Please Wait",
+                        "The application is still finishing a background task.",
+                    )
+                    event.ignore()
+                    return
         self._save_settings(include_geometry=True)
         logger.info("%s closed", APP_NAME)
         event.accept()

@@ -1,7 +1,7 @@
 """Single source of truth for application identity and version information."""
 
 APP_NAME = "XLSForm2Word"
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.2.1"
 AUTHOR = "Arman Mahmud"
 WEBSITE = "https://www.arman-mahmud.com"
 DESCRIPTION = (
