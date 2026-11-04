@@ -1,4 +1,4 @@
-"""Read ODK and SurveyCTO XLSForm workbooks."""
+"""Read ODK, SurveyCTO, and KoboToolbox XLSForm workbooks."""
 
 from __future__ import annotations
 

@@ -23,6 +23,7 @@ from utils.version import APP_NAME, APP_VERSION, AUTHOR, WEBSITE
 ROOT = Path(__file__).resolve().parents[1]
 ODK_SAMPLE = ROOT / "sample" / "HouseholdSurvey_ODK.xlsx"
 CTO_SAMPLE = ROOT / "sample" / "HouseholdSurvey_SurveyCTO.xlsx"
+KOBO_SAMPLE = ROOT / "sample" / "HouseholdSurvey_KoboToolbox.xlsx"
 
 
 def test_language_detection_preserves_order_and_deduplicates() -> None:
@@ -262,3 +263,46 @@ def test_empty_choices_sheet_is_allowed() -> None:
     builder = ChoicesBuilder()
     frame = pd.DataFrame(columns=["list_name", "name", "label::English"])
     assert builder.build_from_frame(frame, Platform.ODK, "English") == {}
+
+
+def test_kobotoolbox_platform_properties_match_odk() -> None:
+    assert Platform.KOBOTOOLBOX.choice_value_column == "name"
+    assert Platform.KOBOTOOLBOX.choice_value_fallback == "value"
+    assert Platform.KOBOTOOLBOX.relevance_column == "relevant"
+    assert Platform.KOBOTOOLBOX.relevance_fallback == "relevance"
+
+
+def test_choices_builder_kobotoolbox_uses_name_column() -> None:
+    form = XLSFormLoader().load(KOBO_SAMPLE)
+    choices = ChoicesBuilder().build(form, Platform.KOBOTOOLBOX, "English")
+    assert [choice.value for choice in choices["sex"]] == ["1", "2", "3"]
+    assert choices["sex"][0].label == "Male"
+
+
+def test_kobotoolbox_relevance_column_is_used() -> None:
+    form = XLSFormLoader().load(KOBO_SAMPLE)
+    generator = WordGenerator()
+    choices = ChoicesBuilder().build(form, Platform.KOBOTOOLBOX, "English")
+    rows = generator.build_question_rows(
+        form,
+        "label::English",
+        "English",
+        Platform.KOBOTOOLBOX,
+        choices,
+    )
+    phone = next(row for row in rows if row.variable == "phone_number")
+    assert phone.relevance == "${consent} = 'yes'"
+
+
+def test_generation_service_kobotoolbox(tmp_path: Path) -> None:
+    request = GenerationRequest(
+        form_path=KOBO_SAMPLE,
+        output_folder=tmp_path,
+        platform=Platform.KOBOTOOLBOX,
+        languages=("English",),
+        columns=("Variable", "Question", "Choices"),
+    )
+    result = GenerationService().generate(request)
+    assert len(result.outputs) == 1
+    assert result.outputs[0].exists()
+    assert result.outputs[0].name == "Household Survey_English_word.docx"

@@ -2,18 +2,18 @@
 
 ![XLSForm2Word](assets/icon.png)
 
-XLSForm2Word is a portable Windows desktop application that converts ODK and
-SurveyCTO XLSForms into professionally formatted Microsoft Word questionnaire
-documentation. It is built for research assistants, survey programmers, M&E
+XLSForm2Word is a portable Windows desktop application that converts ODK,
+SurveyCTO, and KoboToolbox XLSForms into professionally formatted Microsoft
+Word questionnaire documentation. It is built for research assistants, survey programmers, M&E
 specialists, data analysts, and researchers who need reliable questionnaire
 printouts without installing Python or using an internet connection.
 
-Current release: **v1.0.2**
+Current release: **v1.1.0**
 
 ## Download and Install
 
 1. Go to the [Releases](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) page.
-2. Download `XLSForm2Word_v1.0.2_Windows.zip` from the Assets section.
+2. Download `XLSForm2Word_v1.1.0_Windows.zip` from the Assets section.
 3. Extract the ZIP to any folder.
 4. Open the extracted `XLSForm2Word` folder and double-click `XLSForm2Word.exe`.
 
@@ -23,7 +23,7 @@ No installation, administrator rights, Python, or internet connection is require
 
 ## Quick Start
 
-1. Select **ODK** or **SurveyCTO** as the platform.
+1. Select **ODK**, **SurveyCTO**, or **KoboToolbox** as the platform.
 2. Browse for or drag and drop an `.xlsx` or `.xls` XLSForm.
 3. Select one or more detected languages.
 4. Choose an output folder.
@@ -33,7 +33,7 @@ Each selected language produces a separate Word document named `<QuestionnaireNa
 
 ## Features
 
-- ODK and SurveyCTO support
+- ODK, SurveyCTO, and KoboToolbox support
 - Automatic detection of `label::<language>` columns
 - One Word document per selected language
 - Drag and drop or file browsing
@@ -90,14 +90,15 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-The tests cover language detection, required sheets, ODK and SurveyCTO column
-mapping, choice formatting, validation, Word formatting and metadata, and
-multi-language generation.
+The tests cover language detection, required sheets, ODK, SurveyCTO, and
+KoboToolbox column mapping, choice formatting, validation, Word formatting and
+metadata, and multi-language generation.
 
 Two ready-to-use test workbooks are included:
 
 - `sample/HouseholdSurvey_ODK.xlsx`
 - `sample/HouseholdSurvey_SurveyCTO.xlsx`
+- `sample/HouseholdSurvey_KoboToolbox.xlsx`
 
 Both contain English, Bangla, and Arabic labels.
 

@@ -301,7 +301,7 @@ class WordGenerator:
         properties.title = questionnaire_name
         properties.subject = f"{questionnaire_name} - {language} questionnaire"
         properties.category = "Questionnaire"
-        properties.keywords = "XLSForm, ODK, SurveyCTO, questionnaire"
+        properties.keywords = "XLSForm, ODK, SurveyCTO, KoboToolbox, questionnaire"
         properties.comments = f"Generated using {APP_NAME} v{APP_VERSION}"
         properties.language = language
         now = datetime.now()

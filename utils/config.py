@@ -13,7 +13,7 @@ from utils.paths import settings_path
 
 logger = logging.getLogger(__name__)
 
-PLATFORMS: tuple[str, ...] = ("ODK", "SurveyCTO")
+PLATFORMS: tuple[str, ...] = ("ODK", "SurveyCTO", "KoboToolbox")
 COLUMN_NAMES: tuple[str, ...] = (
     "Variable",
     "Question",

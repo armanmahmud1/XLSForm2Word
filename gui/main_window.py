@@ -61,7 +61,7 @@ from utils.version import APP_NAME, APP_VERSION, AUTHOR, WEBSITE
 logger = logging.getLogger(__name__)
 
 WINDOW_TITLE = APP_NAME
-SUBTITLE = "Convert ODK and SurveyCTO XLSForms into Word documentation"
+SUBTITLE = "Convert ODK, SurveyCTO, and KoboToolbox XLSForms into Word documentation"
 COLUMN_LAYOUT_ROWS = 3
 LANGUAGE_COLUMNS = 4
 
@@ -243,10 +243,12 @@ class MainWindow(QMainWindow):
         for name in PLATFORMS:
             radio = QRadioButton(name)
             radio.setCursor(Qt.CursorShape.PointingHandCursor)
-            if name == "ODK":
-                radio.setToolTip("ODK forms use 'name' values and 'relevant'.")
-            else:
-                radio.setToolTip("SurveyCTO forms use 'value' values and 'relevance'.")
+            tooltips = {
+                "ODK": "ODK forms use 'name' values and 'relevant'.",
+                "SurveyCTO": "SurveyCTO forms use 'value' values and 'relevance'.",
+                "KoboToolbox": "KoboToolbox forms use 'name' values and 'relevant' (same as ODK).",
+            }
+            radio.setToolTip(tooltips.get(name, ""))
             radio.toggled.connect(self._on_platform_changed)
             self.platform_group.addButton(radio)
             platform_row.addWidget(radio)
@@ -465,7 +467,10 @@ class MainWindow(QMainWindow):
     def _selected_platform(self) -> Platform:
         button = self.platform_group.checkedButton()
         name = button.text() if button is not None else "ODK"
-        return Platform.SURVEYCTO if name == "SurveyCTO" else Platform.ODK
+        try:
+            return Platform(name)
+        except ValueError:
+            return Platform.ODK
 
     def _selected_columns(self) -> list[str]:
         return [

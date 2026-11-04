@@ -1,6 +1,6 @@
 # XLSForm2Word User Guide
 
-XLSForm2Word turns an ODK or SurveyCTO XLSForm into a clean, printable Microsoft Word questionnaire. It is designed for research assistants, survey programmers, M&E specialists, data analysts, and researchers who need documentation without installing Python or using an internet connection.
+XLSForm2Word turns an ODK, SurveyCTO, or KoboToolbox XLSForm into a clean, printable Microsoft Word questionnaire. It is designed for research assistants, survey programmers, M&E specialists, data analysts, and researchers who need documentation without installing Python or using an internet connection.
 
 ## What you need
 
@@ -19,7 +19,7 @@ The application is portable. You can place the folder on a USB drive or a shared
 
 ## Convert a form in six steps
 
-1. Choose the platform: ODK or SurveyCTO. ODK is selected by default.
+1. Choose the platform: ODK, SurveyCTO, or KoboToolbox. ODK is selected by default.
 2. Click Browse XLSForm and select your workbook, or drag and drop the file anywhere onto the application window.
 3. Review the detected languages. XLSForm2Word finds every column that begins with label::, such as label::English or label::Bangla. Tick one or more languages.
 4. Click Browse beside Output folder and choose where the Word documents should be saved.
@@ -33,6 +33,8 @@ The progress area shows each stage: Ready, Loading form, Generating documents, a
 ODK forms normally use the name column for choice values and the relevant column for relevance expressions.
 
 SurveyCTO forms normally use the value column for choice values and the relevance column for relevance expressions.
+
+KoboToolbox forms follow the same conventions as ODK, using the name column for choice values and the relevant column for relevance expressions.
 
 XLSForm2Word selects the correct columns after you choose the platform. If a preferred column is not present, it tries the equivalent column and records the fallback in the log.
 
@@ -64,7 +66,7 @@ The document uses A4 portrait paper, the requested margins, Calibri Light 9 poin
 
 ## Question and choice handling
 
-Choice questions display their choices from the choices sheet. The choice value comes from name for ODK and value for SurveyCTO. The choice label comes from the matching label:: language column.
+Choice questions display their choices from the choices sheet. The choice value comes from name for ODK and KoboToolbox, and value for SurveyCTO. The choice label comes from the matching label:: language column.
 
 Common non-choice types are shown with a clear placeholder when a label is not available, including Enumerator Note, Text, Date, Number, Latitude/Longitude/Altitude, and Calculated field. Structural rows such as begin_group and end_repeat, and system-generated rows such as today and deviceid, are omitted from the table.
 
@@ -86,7 +88,7 @@ No languages are detected: Add at least one column such as label::English to the
 
 The Word document cannot be saved: Close the document if it is already open in Word, or choose a folder you have permission to write to.
 
-Choices are missing: Check that the choices sheet has list_name, the correct value column (name for ODK, value for SurveyCTO), and a matching label:: language column.
+Choices are missing: Check that the choices sheet has list_name, the correct value column (name for ODK and KoboToolbox, value for SurveyCTO), and a matching label:: language column.
 
 A column disappears: At least one table column must remain selected, so the application restores the last column if you try to clear all of them.
 

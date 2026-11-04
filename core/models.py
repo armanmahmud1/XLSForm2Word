@@ -12,22 +12,23 @@ import pandas as pd
 class Platform(str, Enum):
     ODK = "ODK"
     SURVEYCTO = "SurveyCTO"
+    KOBOTOOLBOX = "KoboToolbox"
 
     @property
     def choice_value_column(self) -> str:
-        return "name" if self is Platform.ODK else "value"
+        return "value" if self is Platform.SURVEYCTO else "name"
 
     @property
     def choice_value_fallback(self) -> str:
-        return "value" if self is Platform.ODK else "name"
+        return "name" if self is Platform.SURVEYCTO else "value"
 
     @property
     def relevance_column(self) -> str:
-        return "relevant" if self is Platform.ODK else "relevance"
+        return "relevance" if self is Platform.SURVEYCTO else "relevant"
 
     @property
     def relevance_fallback(self) -> str:
-        return "relevance" if self is Platform.ODK else "relevant"
+        return "relevant" if self is Platform.SURVEYCTO else "relevance"
 
 
 @dataclass(frozen=True)

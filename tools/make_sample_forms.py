@@ -1,4 +1,4 @@
-"""Create sample ODK and SurveyCTO XLSForms used for testing and demos."""
+"""Create sample ODK, SurveyCTO, and KoboToolbox XLSForms used for testing and demos."""
 
 from __future__ import annotations
 
@@ -162,8 +162,8 @@ def build_form(path: Path, platform: str) -> None:
     workbook = Workbook()
     survey_sheet = workbook.active
     survey_sheet.title = "survey"
-    value_column = "name" if platform == "ODK" else "value"
-    relevance_column = "relevant" if platform == "ODK" else "relevance"
+    value_column = "value" if platform == "SurveyCTO" else "name"
+    relevance_column = "relevance" if platform == "SurveyCTO" else "relevant"
 
     survey_headers = [
         "type",
@@ -229,6 +229,7 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     build_form(root / "sample" / "HouseholdSurvey_ODK.xlsx", "ODK")
     build_form(root / "sample" / "HouseholdSurvey_SurveyCTO.xlsx", "SurveyCTO")
+    build_form(root / "sample" / "HouseholdSurvey_KoboToolbox.xlsx", "KoboToolbox")
 
 
 if __name__ == "__main__":
