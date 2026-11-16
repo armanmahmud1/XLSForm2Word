@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -16,6 +17,22 @@ SUPPORTED_EXTENSIONS = {".xlsx", ".xls"}
 SURVEY_SHEET = "survey"
 CHOICES_SHEET = "choices"
 SETTINGS_SHEET = "settings"
+
+# Excel stores control characters as "_x000B_"-style escapes, which the Excel
+# readers pass through as literal text.
+_EXCEL_CONTROL_ESCAPE = re.compile(r"_x(00[01][0-9A-Fa-f])_")
+# Characters that cannot be stored in a Word (XML) document.
+_LINE_BREAK_CONTROLS = re.compile(r"[\x0b\x0c]")
+_ILLEGAL_XML_CHARS = re.compile(r"[\x00-\x08\x0e-\x1f\ud800-\udfff￾￿]")
+
+
+def clean_text(value: object) -> str:
+    """Return a stripped string that is safe to write into a Word document."""
+    if value is None or (isinstance(value, float) and value != value):
+        return ""
+    text = _EXCEL_CONTROL_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), str(value))
+    text = _LINE_BREAK_CONTROLS.sub("\n", text)
+    return _ILLEGAL_XML_CHARS.sub("", text).strip()
 
 
 class XLSFormLoader:
@@ -95,35 +112,40 @@ class XLSFormLoader:
 
     @staticmethod
     def _read_sheet(workbook: pd.ExcelFile, sheet_name: str) -> pd.DataFrame:
-        frame = pd.read_excel(
+        # The header row is read as data so that duplicate column names can be
+        # detected; pandas would otherwise silently rename them to "name.1".
+        raw = pd.read_excel(
             workbook,
             sheet_name=sheet_name,
+            header=None,
             dtype=str,
             keep_default_na=False,
         )
-        frame = frame.copy()
-        frame.columns = XLSFormLoader._unique_columns(
-            [str(column).strip() for column in frame.columns]
-        )
-        for column in frame.columns:
-            frame[column] = frame[column].map(
-                lambda value: "" if value is None else str(value).strip()
-            )
-        return frame
+        if raw.empty:
+            return pd.DataFrame()
 
-    @staticmethod
-    def _unique_columns(columns: list[str]) -> list[str]:
-        seen: dict[str, int] = {}
-        result: list[str] = []
-        for column in columns:
-            key = column.casefold()
+        names: list[str] = []
+        positions: list[int] = []
+        seen: set[str] = set()
+        for position, header in enumerate(raw.iloc[0]):
+            name = clean_text(header) or f"Unnamed: {position}"
+            key = name.casefold()
             if key in seen:
-                seen[key] += 1
-                result.append(f"{column}.{seen[key]}")
-            else:
-                seen[key] = 0
-                result.append(column)
-        return result
+                logger.warning(
+                    "Duplicate column %r in sheet %r ignored; the first one is used",
+                    name,
+                    sheet_name,
+                )
+                continue
+            seen.add(key)
+            names.append(name)
+            positions.append(position)
+
+        frame = raw.iloc[1:, positions].reset_index(drop=True)
+        frame.columns = names
+        for column in frame.columns:
+            frame[column] = frame[column].map(clean_text)
+        return frame
 
     @staticmethod
     def _questionnaire_name(settings: pd.DataFrame | None, path: Path) -> str:

@@ -384,6 +384,202 @@ def test_kobotoolbox_relevance_column_is_used() -> None:
     assert phone.relevance == "${consent} = 'yes'"
 
 
+def _write_workbook(
+    path: Path,
+    survey: list[list[object]],
+    choices: list[list[object]],
+) -> Path:
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "survey"
+    for row in survey:
+        sheet.append(row)
+    choices_sheet = workbook.create_sheet("choices")
+    for row in choices:
+        choices_sheet.append(row)
+    workbook.save(path)
+    return path
+
+
+def _question_rows(path: Path, language: str = "English"):
+    form = XLSFormLoader().load(path)
+    platform = detect_platform(form)
+    choices = ChoicesBuilder().build(form, platform, language)
+    label = LanguageDetector.resolve(form.survey.columns, language)
+    assert label is not None
+    return WordGenerator().build_question_rows(
+        form, label.column, language, platform, choices
+    )
+
+
+def test_space_separated_structural_types_are_skipped(tmp_path: Path) -> None:
+    path = _write_workbook(
+        tmp_path / "groups.xlsx",
+        [
+            ["type", "name", "label::English"],
+            ["begin group", "g1", "Section A"],
+            ["begin repeat", "members", "Members"],
+            ["integer", "age", "Age"],
+            ["end repeat", "members", ""],
+            ["End Group", "g1", ""],
+        ],
+        [["list_name", "name", "label::English"]],
+    )
+    assert [row.variable for row in _question_rows(path)] == ["age"]
+    assert parse_type("begin group").is_structural
+    assert parse_type("end repeat").is_structural
+
+
+def test_multi_word_and_metadata_types_are_skipped(tmp_path: Path) -> None:
+    path = _write_workbook(
+        tmp_path / "meta.xlsx",
+        [
+            ["type", "name", "label::English"],
+            ["text audit", "ta", ""],
+            ["speed violations count", "svc", ""],
+            ["start-geopoint", "sg", ""],
+            ["background-audio", "ba", ""],
+            ["caseid", "cid", ""],
+            ["text", "q1", "Name"],
+        ],
+        [["list_name", "name", "label::English"]],
+    )
+    assert [row.variable for row in _question_rows(path)] == ["q1"]
+
+
+def test_rank_and_missing_choice_lists(tmp_path: Path) -> None:
+    path = _write_workbook(
+        tmp_path / "choices.xlsx",
+        [
+            ["type", "name", "label::English"],
+            ["rank fruits", "r1", "Rank"],
+            ["select_one fruits or_other", "s1", "Pick"],
+            ["select_one typo_list", "s2", "Missing"],
+            ["select_one ${members}", "s3", "Dynamic"],
+        ],
+        [
+            ["list_name", "name", "label::English"],
+            ["fruits", "a", "Apple"],
+            ["fruits", "b", "Banana"],
+        ],
+    )
+    rows = {row.variable: row.choices for row in _question_rows(path)}
+    assert rows["r1"] == "[a] Apple\n[b] Banana"
+    assert rows["s1"] == "[a] Apple\n[b] Banana"
+    assert rows["s2"] == "[Select One]\n[Choice list 'typo_list' not found]"
+    assert rows["s3"] == "[Select One]"
+
+
+def test_rtl_is_detected_for_language_codes_and_hebrew(tmp_path: Path) -> None:
+    assert WordGenerator._is_rtl_language("Arabic (ar)")
+    assert WordGenerator._is_rtl_language("Urdu - Pakistan")
+    assert WordGenerator._is_rtl_language("arabic")
+    assert not WordGenerator._is_rtl_language("English (en)")
+    assert not WordGenerator._is_rtl_language("Bangla")
+
+    path = _write_workbook(
+        tmp_path / "rtl.xlsx",
+        [
+            ["type", "name", "label::Arabic (ar)", "label::Hebrew"],
+            ["text", "q1", "ما اسمك؟", "מה שמך?"],
+        ],
+        [["list_name", "name", "label"]],
+    )
+    form = XLSFormLoader().load(path)
+    for language in ("Arabic (ar)", "Hebrew"):
+        output = WordGenerator().generate(
+            form, language, Platform.ODK, ["Variable", "Question"], tmp_path
+        )
+        with zipfile.ZipFile(output) as archive:
+            document_xml = archive.read("word/document.xml").decode("utf-8")
+        # Title paragraph and the question cell.
+        assert document_xml.count("<w:bidi") == 2, language
+
+
+def test_control_characters_are_removed_on_load(tmp_path: Path) -> None:
+    from core.xlsform_loader import clean_text
+
+    assert clean_text("  a\x0bb\x01c\x00 ") == "a\nbc"
+    assert clean_text("line_x000D_\nnext_x0041_") == "line\r\nnext_x0041_"
+    assert clean_text(None) == ""
+    assert clean_text(float("nan")) == ""
+
+    path = _write_workbook(
+        tmp_path / "control.xlsx",
+        [
+            ["type", "name", "label::English"],
+            ["text", "q1", "First_x000B_Second_x0001_"],
+        ],
+        [["list_name", "name", "label"]],
+    )
+    form = XLSFormLoader().load(path)
+    output = WordGenerator().generate(
+        form, "English", Platform.ODK, ["Variable", "Question"], tmp_path
+    )
+    assert output.exists()
+    assert form.survey["label::English"][0] == "First\nSecond"
+
+
+def test_duplicate_columns_do_not_create_phantom_languages(tmp_path: Path) -> None:
+    path = _write_workbook(
+        tmp_path / "duplicate.xlsx",
+        [
+            ["type", "name", "label::English", "label::English", "label::Bangla"],
+            ["text", "q1", "First", "Second", "Bangla"],
+        ],
+        [["list_name", "name", "label"]],
+    )
+    form = XLSFormLoader().load(path)
+    assert list(form.survey.columns) == [
+        "type",
+        "name",
+        "label::English",
+        "label::Bangla",
+    ]
+    assert form.survey["label::English"][0] == "First"
+    languages = [item.language for item in LanguageDetector().detect(form.survey)]
+    assert languages == ["English", "Bangla"]
+
+
+def test_colliding_language_filenames_get_distinct_outputs(tmp_path: Path) -> None:
+    path = _write_workbook(
+        tmp_path / "collision.xlsx",
+        [
+            ["type", "name", "label::A:B", "label::A?B"],
+            ["text", "q1", "One", "Two"],
+        ],
+        [["list_name", "name", "label"]],
+    )
+    result = GenerationService().generate(
+        GenerationRequest(
+            form_path=path,
+            output_folder=tmp_path,
+            platform=Platform.ODK,
+            languages=("A:B", "A?B"),
+            columns=("Variable", "Question"),
+        )
+    )
+    names = [output.name for output in result.outputs]
+    assert names == ["collision_A_B_word.docx", "collision_A_B_word_2.docx"]
+    assert all(output.exists() for output in result.outputs)
+
+
+def test_failed_save_leaves_no_temporary_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    form = XLSFormLoader().load(ODK_SAMPLE)
+
+    def explode(*_: object, **__: object) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(WordGenerator, "_set_company_property", explode)
+    with pytest.raises(RuntimeError):
+        WordGenerator().generate(
+            form, "English", Platform.ODK, ["Variable"], tmp_path
+        )
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_generation_service_kobotoolbox(tmp_path: Path) -> None:
     request = GenerationRequest(
         form_path=KOBO_SAMPLE,

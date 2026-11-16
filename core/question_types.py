@@ -56,7 +56,37 @@ GENERATED_TYPES = {
     "imei",
     "osversion",
     "launchtime",
+    "email",
+    "caseid",
+    "comments",
+    "start-geopoint",
+    "background-audio",
+    "text_audit",
+    "audio_audit",
+    "speed_violations_count",
+    "speed_violations_list",
+    "speed_violations_audit",
+    "sensor_statistic",
+    "sensor_stream",
 }
+
+# Types that XLSForm spells with spaces; they are normalised to underscores.
+MULTI_WORD_TYPES: tuple[tuple[str, ...], ...] = tuple(
+    tuple(name.split())
+    for name in (
+        "begin group",
+        "end group",
+        "begin repeat",
+        "end repeat",
+        "text audit",
+        "audio audit",
+        "speed violations count",
+        "speed violations list",
+        "speed violations audit",
+    )
+)
+
+CHOICE_LIST_TYPES = {"select_one", "select_multiple", "rank"}
 
 
 @dataclass(frozen=True)
@@ -68,6 +98,11 @@ class QuestionType:
     @property
     def is_select(self) -> bool:
         return self.base in {"select_one", "select_multiple"}
+
+    @property
+    def uses_choice_list(self) -> bool:
+        """True for types whose answers come from the choices sheet."""
+        return self.base in CHOICE_LIST_TYPES
 
     @property
     def is_structural(self) -> bool:
@@ -97,6 +132,14 @@ def parse_type(raw_type: object) -> QuestionType:
     """Split an XLSForm ``type`` value into its base type and choice list."""
     text = "" if raw_type is None else str(raw_type).strip()
     parts = text.split()
-    base = parts[0].lower() if parts else ""
-    list_name = parts[1] if len(parts) > 1 else ""
+    lowered = [part.lower() for part in parts]
+    for words in MULTI_WORD_TYPES:
+        if tuple(lowered[: len(words)]) == words:
+            base = "_".join(words)
+            rest = parts[len(words) :]
+            break
+    else:
+        base = lowered[0] if lowered else ""
+        rest = parts[1:]
+    list_name = rest[0] if rest else ""
     return QuestionType(raw=text, base=base, list_name=list_name)

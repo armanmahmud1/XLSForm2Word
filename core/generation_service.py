@@ -72,12 +72,17 @@ class GenerationService:
         )
 
         outputs: list[Path] = []
+        used_filenames: set[str] = set()
         language_count = len(resolved.languages)
         for index, language in enumerate(resolved.languages, start=1):
             base_percent = 12 + int(((index - 1) / language_count) * 80)
             report(
                 base_percent,
                 f"Generating documents... ({index} of {language_count}: {language})",
+            )
+            filename = self._unique_filename(
+                self.generator.build_filename(form.questionnaire_name, language),
+                used_filenames,
             )
             try:
                 output = self.generator.generate(
@@ -86,6 +91,7 @@ class GenerationService:
                     platform=resolved.platform,
                     columns=resolved.columns,
                     output_folder=resolved.output_folder,
+                    filename=filename,
                 )
             except XLSForm2WordError:
                 raise
@@ -107,3 +113,21 @@ class GenerationService:
             request=resolved,
             outputs=tuple(outputs),
         )
+
+    @staticmethod
+    def _unique_filename(filename: str, used: set[str]) -> str:
+        """Keep two languages in one run from writing to the same file."""
+        path = Path(filename)
+        candidate = filename
+        counter = 2
+        while candidate.casefold() in used:
+            candidate = f"{path.stem}_{counter}{path.suffix}"
+            counter += 1
+        if candidate != filename:
+            logger.warning(
+                "Output name %s is already used in this run; writing %s instead",
+                filename,
+                candidate,
+            )
+        used.add(candidate.casefold())
+        return candidate

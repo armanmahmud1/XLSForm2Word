@@ -51,7 +51,9 @@ COLUMN_WIDTHS_INCHES: dict[str, float] = {
     "Calculation": 0.95,
 }
 INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
-RTL_TEXT = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]")
+# Hebrew, Arabic, Syriac, Thaana and their extended/presentation blocks.
+RTL_TEXT = re.compile(r"[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]")
+LANGUAGE_WORDS = re.compile(r"[^\W\d_]+")
 RTL_LANGUAGES = {
     "arabic",
     "ar",
@@ -68,6 +70,16 @@ RTL_LANGUAGES = {
     "ur",
     "uyghur",
     "ug",
+    "dari",
+    "prs",
+    "iw",
+    "yiddish",
+    "yi",
+    "dhivehi",
+    "divehi",
+    "dv",
+    "sorani",
+    "ckb",
 }
 
 
@@ -85,6 +97,7 @@ class WordGenerator:
         platform: Platform | str,
         columns: list[str] | tuple[str, ...],
         output_folder: str | Path,
+        filename: str | None = None,
     ) -> Path:
         platform_enum = (
             platform if isinstance(platform, Platform) else Platform(platform)
@@ -117,8 +130,8 @@ class WordGenerator:
                 f"The output folder could not be created: {exc}"
             ) from exc
 
-        output_path = output_dir / self.build_filename(
-            form.questionnaire_name, language
+        output_path = output_dir / (
+            filename or self.build_filename(form.questionnaire_name, language)
         )
 
         document = self._create_document(
@@ -152,6 +165,9 @@ class WordGenerator:
             raise DocumentGenerationError(
                 f"Could not write '{output_path.name}': {exc}"
             ) from exc
+        except BaseException:
+            self._remove_partial(temp_output)
+            raise
 
         return output_path
 
@@ -193,8 +209,10 @@ class WordGenerator:
             if not variable and not question:
                 continue
 
-            if question_type.is_select:
-                choices_text = self._choices_for(question_type, choice_lists)
+            if question_type.uses_choice_list:
+                choices_text = self._choices_for(
+                    question_type, choice_lists, variable
+                )
             else:
                 choices_text = question_type.placeholder
 
@@ -215,13 +233,24 @@ class WordGenerator:
         self,
         question_type: QuestionType,
         choice_lists: dict[str, list[Choice]],
+        variable: str = "",
     ) -> str:
-        if not question_type.list_name:
-            return ""
-        choices = choice_lists.get(question_type.list_name)
-        if not choices:
-            return ""
-        return self.choices_builder.display_lines(choices)
+        placeholder = question_type.placeholder
+        list_name = question_type.list_name
+        if not list_name:
+            return placeholder
+        choices = choice_lists.get(list_name)
+        if choices:
+            return self.choices_builder.display_lines(choices)
+        if list_name.startswith("${"):
+            # Choices come from a repeat at runtime, not the choices sheet.
+            return placeholder
+        logger.warning(
+            "Choice list %r used by %r was not found in the choices sheet",
+            list_name,
+            variable or question_type.raw,
+        )
+        return f"{placeholder}\n[Choice list '{list_name}' not found]"
 
     @staticmethod
     def _cell(row: object, column: str | None) -> str:
@@ -470,7 +499,11 @@ class WordGenerator:
 
     @staticmethod
     def _is_rtl_language(language: str) -> bool:
-        return language.strip().casefold() in RTL_LANGUAGES
+        text = language.strip().casefold()
+        if text in RTL_LANGUAGES:
+            return True
+        # Handles names such as "Arabic (ar)" or "Urdu - Pakistan".
+        return any(word in RTL_LANGUAGES for word in LANGUAGE_WORDS.findall(text))
 
     @staticmethod
     def _set_paragraph_rtl(paragraph: object) -> None:
@@ -551,8 +584,11 @@ class WordGenerator:
                     archive.writestr(info, payload)
             temp_path.replace(document_path)
         except (OSError, zipfile.BadZipFile) as exc:
-            temp_path.unlink(missing_ok=True)
+            WordGenerator._remove_partial(temp_path)
             raise DocumentGenerationError(
                 "The generated document could not be updated with the required "
                 "Company metadata."
             ) from exc
+        except BaseException:
+            WordGenerator._remove_partial(temp_path)
+            raise
