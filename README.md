@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/armanmahmud1/XLSForm2Word/releases/latest"><strong>Download v1.2.1</strong></a>
+  <a href="https://github.com/armanmahmud1/XLSForm2Word/releases/latest"><strong>Download v1.2.2</strong></a>
 </p>
 
 ---
@@ -30,7 +30,7 @@ Household Survey_Arabic_word.docx
 
 ## Quick Start
 
-1. Download [`XLSForm2Word_v1.2.1_Windows.zip`](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) and extract it.
+1. Download [`XLSForm2Word_v1.2.2_Windows.zip`](https://github.com/armanmahmud1/XLSForm2Word/releases/latest) and extract it.
 2. Double-click **`XLSForm2Word.exe`** (no install needed).
 3. Drag and drop your XLSForm (or click Browse).
 4. Select languages and output columns.
@@ -45,10 +45,12 @@ Household Survey_Arabic_word.docx
 | Category | Details |
 |---|---|
 | **Platforms** | ODK, SurveyCTO, KoboToolbox |
-| **Language detection** | `label::English`, `label:English`, and bare `label` columns |
+| **Language detection** | `label::English`, `label:English`, `label::Arabic (ar)`, and bare `label` columns |
 | **Multi-language** | One Word document per selected language |
 | **Output columns** | Variable, Question, Choices, Constraint, Relevance, Calculation |
-| **Choice lists** | Rendered as `[value] label` from the choices sheet |
+| **Choice lists** | `select_one`, `select_multiple`, and `rank` rendered as `[value] label`; a missing list is flagged in the document |
+| **Clean tables** | Groups, repeats (`begin group` or `begin_group`), and metadata fields are left out |
+| **Right-to-left** | Arabic, Urdu, Farsi, Hebrew, and other RTL languages are laid out right to left |
 | **Document format** | A4 portrait, Calibri Light, repeat-on-every-page headers, branded footer |
 | **File input** | Drag-and-drop or file browser, `.xlsx` and `.xls` |
 | **Auto-detection** | Platform (SurveyCTO vs ODK) is detected automatically from form columns |
@@ -112,6 +114,7 @@ gui/
   main_window.py             Main window and worker orchestration
   about_dialog.py            About dialog
   settings_dialog.py         Settings and support paths
+  form_load_worker.py        Background form loading thread
   generation_worker.py       Background generation thread
   widgets.py                 Drag-and-drop file selector
   theme.py                   Stylesheet

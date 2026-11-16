@@ -17,14 +17,13 @@ XLSForm2Word turns an ODK, SurveyCTO, or KoboToolbox XLSForm into a clean, print
 
 The application is portable. You can place the folder on a USB drive or a shared drive, but make sure you have permission to write to that location so settings and logs can be saved.
 
-## Convert a form in six steps
+## Convert a form in five steps
 
-1. Choose the platform: ODK, SurveyCTO, or KoboToolbox. ODK is selected by default.
-2. Click Browse XLSForm and select your workbook, or drag and drop the file anywhere onto the application window.
-3. Review the detected languages. XLSForm2Word finds every column that begins with label:: or label:, such as label::English, label:English, or label::Bangla. Tick one or more languages.
-4. Click Browse beside Output folder and choose where the Word documents should be saved.
-5. Tick the table columns you want. At least one column must remain selected.
-6. Click Generate Word Documents.
+1. Click Browse XLSForm and select your workbook, or drag and drop the file anywhere onto the application window. The platform is detected automatically.
+2. Review the detected languages. XLSForm2Word finds every column that begins with label:: or label:, such as label::English, label:English, or label::Arabic (ar). If the form only has a plain label column, it is listed as Default. Tick one or more languages.
+3. Click Browse beside Output folder and choose where the Word documents should be saved.
+4. Tick the table columns you want. At least one column must remain selected.
+5. Click Generate Word Documents.
 
 The progress area shows each stage: Ready, Loading form, Generating documents, and Completed. A message appears when the documents are ready, with an option to open the output folder.
 
@@ -36,7 +35,7 @@ SurveyCTO forms normally use the value column for choice values and the relevanc
 
 KoboToolbox forms follow the same conventions as ODK, using the name column for choice values and the relevant column for relevance expressions.
 
-XLSForm2Word selects the correct columns after you choose the platform. If a preferred column is not present, it tries the equivalent column and records the fallback in the log.
+XLSForm2Word detects the platform from the form's column names and selects the correct columns for you. If a preferred column is not present, it tries the equivalent column and records the fallback in the log.
 
 ## Languages and file names
 
@@ -52,6 +51,12 @@ For example, a form named Household Survey with English, Bangla, and Arabic sele
 
 The questionnaire name comes from the form_title or form_name in the settings sheet. If those values are missing, the Excel file name is used.
 
+Characters that Windows does not allow in file names, such as : or ?, are replaced with an underscore. If two selected languages would produce the same file name, the second file gets a numbered suffix such as _2 so that neither document is overwritten. Generating again into the same folder replaces the documents from the earlier run.
+
+## Right-to-left languages
+
+Documents for right-to-left languages such as Arabic, Urdu, Farsi, Dari, Pashto, and Hebrew are laid out right to left. The language is recognised from its name or code, so label::Arabic, label::ar, and label::Arabic (ar) all work.
+
 ## What appears in the Word document
 
 Each document contains:
@@ -66,13 +71,19 @@ The document uses A4 portrait paper, the requested margins, Calibri Light 9 poin
 
 ## Question and choice handling
 
-Choice questions display their choices from the choices sheet. The choice value comes from name for ODK and KoboToolbox, and value for SurveyCTO. The choice label comes from the matching label:: language column.
+Choice questions (select_one, select_multiple, and rank) display their choices from the choices sheet. The choice value comes from name for ODK and KoboToolbox, and value for SurveyCTO. The choice label comes from the matching label:: language column.
 
-Common non-choice types are shown with a clear placeholder when a label is not available, including Enumerator Note, Text, Date, Number, Latitude/Longitude/Altitude, and Calculated field. Structural rows such as begin_group and end_repeat, and system-generated rows such as today and deviceid, are omitted from the table.
+If a question refers to a choice list that is not in the choices sheet, the Choices cell shows a note such as [Choice list 'fruits' not found] and a warning is written to the log. This usually means the list name is misspelled.
+
+Other types are shown with a clear placeholder in the Choices column, including Enumerator Note, Text, Date, Number, Latitude/Longitude/Altitude, and Calculated field.
+
+Structural rows (begin group, end group, begin repeat, and end repeat, written with either a space or an underscore) are omitted from the table. So are system-generated rows such as start, today, deviceid, audit, start-geopoint, background-audio, and SurveyCTO's caseid, text audit, and speed violations fields.
+
+If the survey or choices sheet has two columns with the same name, the first one is used and the duplicate is ignored. Hidden control characters pasted into a cell are removed, so they do not appear in the Word document.
 
 ## Settings
 
-Your platform, output folder, selected columns, and window size are saved automatically in settings.json beside the executable and restored the next time you start the application.
+Your output folder, selected columns, and window size are saved automatically in settings.json beside the executable and restored the next time you start the application.
 
 Use File > Settings to see the settings and log locations. You can reset preferences from this window. Resetting preferences does not delete generated documents.
 
@@ -88,7 +99,7 @@ No languages are detected: Add at least one column such as label::English or lab
 
 The Word document cannot be saved: Close the document if it is already open in Word, or choose a folder you have permission to write to.
 
-Choices are missing: Check that the choices sheet has list_name, the correct value column (name for ODK and KoboToolbox, value for SurveyCTO), and a matching label:: or label: language column.
+Choices are missing: Check that the choices sheet has list_name, the correct value column (name for ODK and KoboToolbox, value for SurveyCTO), and a matching label:: or label: language column. A "Choice list not found" note in the Choices column means the list name in the survey sheet does not match any list_name in the choices sheet.
 
 A column disappears: At least one table column must remain selected, so the application restores the last column if you try to clear all of them.
 
